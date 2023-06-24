@@ -1,5 +1,6 @@
 # TRI-VIDAR - Copyright 2022 Toyota Research Institute.  All rights reserved.
-
+import os
+os.environ["SDL_VIDEODRIVER"]="x11"
 import json
 
 import numpy as np

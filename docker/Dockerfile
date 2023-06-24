@@ -74,6 +74,7 @@ RUN apt-get install -y \
     mesa-utils \
     freeglut3-dev \
     libsdl2-2.0-0 \
+    libsdl2-dev \
     python-pygame
 
 # Install PyTorch3D
@@ -105,3 +106,6 @@ COPY . /workspace/${PROJECT}
 # Set environment variables
 ENV PYTHONPATH="/workspace/${PROJECT}:$PYTHONPATH"
 ENV PYTHONPATH="/workspace/${PROJECT}/externals/camviz:$PYTHONPATH"
+
+# Config X11
+RUN apt install x11-apps -y

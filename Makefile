@@ -7,6 +7,7 @@ WANDB_MODE ?= run
 DOCKER_OPTS := \
 			--name ${PROJECT} \
 			--rm -it \
+      		--gpus=all \
 			--shm-size=${SHMSIZE} \
 			-e AWS_DEFAULT_REGION \
 			-e AWS_ACCESS_KEY_ID \
@@ -50,7 +51,7 @@ docker-build:
 		-t ${DOCKER_IMAGE} .
 
 docker-interactive: docker-build
-	nvidia-docker run ${DOCKER_OPTS} ${DOCKER_IMAGE} bash
+	docker run ${DOCKER_OPTS} ${DOCKER_IMAGE} bash
 
 docker-run: docker-build
-	nvidia-docker run ${DOCKER_OPTS} ${DOCKER_IMAGE} bash -c "${COMMAND}"
+	docker run ${DOCKER_OPTS} ${DOCKER_IMAGE} bash -c "${COMMAND}"
