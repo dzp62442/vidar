@@ -51,7 +51,7 @@ docker-build:
 		-t ${DOCKER_IMAGE} .
 
 docker-interactive: docker-build
-	docker run ${DOCKER_OPTS} ${DOCKER_IMAGE} bash
+	nvidia-docker run ${DOCKER_OPTS} ${DOCKER_IMAGE} bash
 
 docker-run: docker-build
-	docker run ${DOCKER_OPTS} ${DOCKER_IMAGE} bash -c "${COMMAND}"
+	nvidia-docker run ${DOCKER_OPTS} ${DOCKER_IMAGE} bash -c "${COMMAND}"
