@@ -8,3 +8,4 @@ default:
     validate_first: True
     validate_flipped: True
     sync_batch_norm: True
+    debug: True

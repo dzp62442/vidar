@@ -106,7 +106,7 @@ def setup_dataset(cfg, root='vidar/datasets', verbose=False):
         if key not in shared_keys and not is_namespace(val):
             num_datasets = max(num_datasets, len(val))
 
-    datasets = []
+    datasets = []  # 空列表，存储数据集对象
     for i in range(num_datasets):
         args = {}
         for key, val in cfg.__dict__.items():
@@ -123,7 +123,7 @@ def setup_dataset(cfg, root='vidar/datasets', verbose=False):
         context = cfg.context
         labels = cfg.labels
 
-        dataset = load_class(name + 'Dataset', root)(**args)
+        dataset = load_class(name + 'Dataset', root)(**args)  # 加载数据集类
 
         if cfg_has(cfg, 'repeat') and repeat > 1:
             dataset = ConcatDataset([dataset for _ in range(repeat)])
@@ -174,7 +174,7 @@ def setup_datasets(cfg, verbose=False, concat_modes=('train', 'mixed'), stack=Tr
 
     font = {'color': 'yellow', 'attrs': ('bold', 'dark')}
 
-    datasets_cfg = {}
+    datasets_cfg = {}  # 存储数据集配置
     for key in cfg.__dict__.keys():
         datasets_cfg[key] = cfg.__dict__[key]
         for mode in ['train', 'validation']:
@@ -182,6 +182,7 @@ def setup_datasets(cfg, verbose=False, concat_modes=('train', 'mixed'), stack=Tr
                 datasets_cfg[key] = to_namespace(merge_dict(deepcopy(
                     cfg.__dict__[mode].__dict__), cfg.__dict__[key].__dict__))
 
+    print(datasets_cfg)
     datasets = {}
     for key, val in list(datasets_cfg.items()):
         if 'name' in val.__dict__.keys():

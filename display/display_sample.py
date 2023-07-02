@@ -1,6 +1,7 @@
 # TRI-VIDAR - Copyright 2022 Toyota Research Institute.  All rights reserved.
-import os
-os.environ["SDL_VIDEODRIVER"]="x11"
+
+# import os
+# os.environ["SDL_VIDEODRIVER"]="x11"
 import json
 
 import numpy as np
@@ -48,7 +49,7 @@ def display_sample(data, flip=False):
         points[key] = cam[key].reconstruct_depth_map(
             depth[key], to_world=True).reshape(num_cams, 3, -1).permute(0, 2, 1)
 
-    draw = Draw((wh[0] * 4, wh[1] * 3), width=2100)
+    draw = Draw((wh[0] * 4, wh[1] * 3), width=3400)
     draw.add2DimageGrid('cam', (0.0, 0.0, 0.5, 1.0), n=(3, 2), res=wh)
     draw.add3Dworld('wld', (0.5, 0.0, 1.0, 1.0), pose=cam[0].Tcw.T[0])
 

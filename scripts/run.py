@@ -8,6 +8,7 @@ import torch
 from vidar.core.trainer import Trainer
 from vidar.core.wrapper import Wrapper
 from vidar.utils.config import read_config
+from vidar.utils.logging import pcolor
 
 
 def train(cfg, **kwargs):
@@ -16,7 +17,7 @@ def train(cfg, **kwargs):
 
     cfg = read_config(cfg, **kwargs)
 
-    wrapper = Wrapper(cfg, verbose=True)
+    wrapper = Wrapper(cfg, verbose=True)    
     trainer = Trainer(cfg)
     trainer.learn(wrapper)
 

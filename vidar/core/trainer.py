@@ -272,7 +272,7 @@ class Trainer:
 
         for key in wrapper.datasets_cfg.keys():
             wrapper.datasets_cfg[key] = make_list(wrapper.datasets_cfg[key])
-
+        
         # Prepare dataloaders
         dataloaders = {
             key: setup_dataloader(val, wrapper.datasets_cfg[key][0].dataloader, key)
@@ -280,7 +280,6 @@ class Trainer:
         }
 
         # Prepare prefixes
-
         prefixes = {
             key: [dataset_prefix(wrapper.datasets_cfg[key][n], n) for n in range(len(val))]
             for key, val in wrapper.datasets_cfg.items() if 'name' in wrapper.datasets_cfg[key][0].__dict__.keys()
@@ -289,6 +288,8 @@ class Trainer:
         # Reduce information
         reduced_dataloaders = reduce(dataloaders, self.all_modes, self.train_modes)
         reduced_prefixes = reduce(prefixes, self.all_modes, self.train_modes)
+        print("reduced_dataloaders: {}".format(reduced_dataloaders))
+        print("reduced_prefixes: {}".format(reduced_prefixes))
 
         print0(pcolor('#' * 60, **font1))
 
@@ -329,7 +330,7 @@ class Trainer:
         optimizers, schedulers = wrapper.configure_optimizers_and_schedulers()
 
         # Get gradient scaler if requested
-        scaler = torch.cuda.amp.GradScaler() if self.grad_scaler else None
+        scaler = torch.cuda.amp.GradScaler() if self.grad_scaler else None  # 在混合精度训练中缩放梯度
 
         # Get learn information
         dataloaders, prefixes = self.prepare_dataloaders(wrapper)
@@ -435,28 +436,31 @@ class Trainer:
         # Set wrapper to eval
         wrapper.eval_custom()
         # For all validation datasets
-        dataset_outputs = []
+        dataset_results = []
         for dataset_idx, (dataset, dataloader, prefix) in \
                 enumerate(zip(wrapper.datasets[mode], dataloaders[mode], prefixes[mode])):
             # Prepare progress bar for that dataset
             progress_bar = self.val_progress_bar(dataloader, prefix, ncols=120)
             # For all batches
-            batch_outputs = []
+            batch_results = []
             for batch_idx, batch in progress_bar:
                 # Send batch to GPU and take a validation step
+                print(batch_idx, batch.keys())
                 batch = sample_to_cuda(batch, self.proc_rank)
                 output, results = wrapper.validation_step(batch, epoch=self.current_epoch)
+                #! print("output: {}".format(output))
+                #! print("results: {}".format(results))
                 if 'batch' in output:
                     batch = output['batch']
-                batch_outputs += results
+                batch_results += results
                 if self.logger:
                     self.logger.log_data('val', batch, output, dataset, prefix)
                 if self.saver:
                     self.saver.save_data(batch, output, prefix)
             # Append dataset outputs to list of all outputs
-            dataset_outputs.append(batch_outputs)
+            dataset_results.append(batch_results)
         # Get results from validation epoch end
-        return wrapper.validation_epoch_end(dataset_outputs, prefixes[mode])
+        return wrapper.validation_epoch_end(dataset_results, prefixes[mode])
 
     def post_validation(self, output, optimizers, prefixes, wrapper):
         """Post-processing steps for validation"""

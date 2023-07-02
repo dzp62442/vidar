@@ -31,9 +31,9 @@ class Wrapper(torch.nn.Module, ABC):
         Print information on screen if enabled
     """
     def __init__(self, cfg, ckpt=None, verbose=False):
-        super().__init__()
+        super().__init__()  # 调用父类（torch.nn.Module）的构造函数，确保正确地初始化对象
 
-        if verbose and rank() == 0:
+        if verbose and rank() == 0:  # 打印信息到屏幕
             font = {'color': 'cyan', 'attrs': ('bold', 'dark')}
             print(pcolor('#' * 100, **font))
             print(pcolor('#' * 42 + ' VIDAR WRAPPER ' + '#' * 43, **font))
@@ -44,8 +44,8 @@ class Wrapper(torch.nn.Module, ABC):
         self.cfg = cfg
 
         # Data augmentations
-        self.flip_lr_prob = cfg_has(cfg.wrapper, 'flip_lr_prob', 0.0)
-        self.validate_flipped = cfg_has(cfg.wrapper, 'validate_flipped', False)
+        self.flip_lr_prob = cfg_has(cfg.wrapper, 'flip_lr_prob', 0.0)  # 数据增强中左右翻转的概率
+        self.validate_flipped = cfg_has(cfg.wrapper, 'validate_flipped', False)  # 是否在验证时使用翻转后的图像进行评估
 
         # Set random seed
         set_random_seed(cfg.wrapper.seed + rank())
@@ -55,13 +55,13 @@ class Wrapper(torch.nn.Module, ABC):
         self.arch = setup_arch(cfg.arch, checkpoint=ckpt, verbose=verbose) if cfg_has(cfg, 'arch') else None
         self.datasets, self.datasets_cfg = setup_datasets(
             cfg.datasets, verbose=verbose) if cfg_has(cfg, 'datasets') else (None, None)
-        self.metrics = setup_metrics(cfg.evaluation) if cfg_has(cfg, 'evaluation') else {}
+        self.metrics = setup_metrics(cfg.evaluation) if cfg_has(cfg, 'evaluation') else {}  # 设置评估指标
 
-        sync_batch_norm = cfg_has(cfg.wrapper, 'sync_batch_norm', False)
-        if sync_batch_norm and os.environ['DIST_MODE'] == 'ddp':
+        sync_batch_norm = cfg_has(cfg.wrapper, 'sync_batch_norm', False)  # 同步批归一化
+        if sync_batch_norm and os.environ['DIST_MODE'] == 'ddp':  # 分布式训练
             self.arch = torch.nn.SyncBatchNorm.convert_sync_batchnorm(self.arch)
 
-        self.mixed_precision = cfg_has(cfg.wrapper, 'mixed_precision', False)
+        self.mixed_precision = cfg_has(cfg.wrapper, 'mixed_precision', False)  # 混合精度训练
 
         self.update_schedulers = None
 
@@ -214,16 +214,16 @@ class Wrapper(torch.nn.Module, ABC):
         """Finishes a training epoch (do nothing for now)"""
         return {}
 
-    def validation_epoch_end(self, output, prefixes):
+    def validation_epoch_end(self, results, prefixes):
         """Finishes a validation epoch"""
-        if isinstance(output[0], dict):
-            output = [output]
+        if isinstance(results[0], dict):
+            results = [results]
 
         metrics_dict = {}
         for task in self.metrics:
             metrics_dict.update(
                 self.metrics[task].reduce(
-                    output, self.datasets['validation'], prefixes))
+                    results, self.datasets['validation'], prefixes))
 
         return metrics_dict
 
