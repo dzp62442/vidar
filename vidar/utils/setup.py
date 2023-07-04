@@ -182,7 +182,6 @@ def setup_datasets(cfg, verbose=False, concat_modes=('train', 'mixed'), stack=Tr
                 datasets_cfg[key] = to_namespace(merge_dict(deepcopy(
                     cfg.__dict__[mode].__dict__), cfg.__dict__[key].__dict__))
 
-    print(datasets_cfg)
     datasets = {}
     for key, val in list(datasets_cfg.items()):
         if 'name' in val.__dict__.keys():

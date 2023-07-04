@@ -5,6 +5,7 @@
 import json
 
 import numpy as np
+import torch
 from camviz import BBox3D
 from camviz import Camera as CameraCV
 from camviz import Draw
@@ -31,10 +32,21 @@ def display_sample(data, flip=False):
         data = flip_batch(data)
     data = fold_batch(data)
 
+    print('------------')
+    print("intrinsics:", data['intrinsics'])
+    
+    
+    
     rgb = data['rgb']
+    print("rgb:", rgb[0].shape)
     intrinsics = data['intrinsics']
+    print("intrinsics:", intrinsics[0].shape)
     depth = data['depth']
+    print("depth:", depth[0].shape)
+    nonzero_indices = torch.nonzero(depth[0][0])
+    print("nonzero_depth:", nonzero_indices.size())
     pose = data['pose']
+    print("pose:", pose[0].shape)
 
     pose = Pose.from_dict(pose, to_global=True)
     cam = Camera.from_dict(intrinsics, rgb, pose)
@@ -43,6 +55,7 @@ def display_sample(data, flip=False):
     wh = rgb[0].shape[-2:][::-1]
 
     keys = [key for key in tasks if key in data.keys()]
+    print("keys:", keys)
 
     points = {}
     for key, val in cam.items():
@@ -85,12 +98,14 @@ def display_sample(data, flip=False):
             while t not in data[keys[k]].keys():
                 k = (k + 1) % len(keys)
             key = keys[k]
+            print("keys: {}, k: {}, key: {}".format(keys, k, key))
         if draw.LEFT:
             change = True
             k = (k - 1) % len(keys)
             while t not in data[keys[k]].keys():
                 k = (k - 1) % len(keys)
             key = keys[k]
+            print("keys: {}, k: {}, key: {}".format(keys, k, key))
         if draw.UP:
             change = True
             t = change_key(data[key], t, 1)
@@ -103,6 +118,7 @@ def display_sample(data, flip=False):
                 t = change_key(data[key], t, -1)
         if change:
             change = False
+            print("key: {}, k: {}, t: {}".format(key, k, t))
             for i in range(num_cams):
                 img = data[key][t][i]
                 if key == 'depth':
