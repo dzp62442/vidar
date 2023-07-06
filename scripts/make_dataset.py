@@ -62,7 +62,7 @@ def make_scene_json(scene_json, calibration_json, rgb_dir):
         current_time = datetime.utcnow()
         timestamp = current_time.isoformat() + "Z"
         # 添加 scene_json_data['data']
-        for cam_name in cam_names:
+        for cam_idx, cam_name in enumerate(cam_names):
             process_missing_img(rgb_dir, cam_name, img_idx)
             data = {
                 'datum': {
@@ -72,7 +72,7 @@ def make_scene_json(scene_json, calibration_json, rgb_dir):
                         'filename': os.path.join('rgb', cam_name, str(img_idx)+'.jpg'),
                         'height': IMG_HEIGHT,
                         'metadata': {},
-                        'pose': calibration_json_data['extrinsics'][0],
+                        'pose': calibration_json_data['extrinsics'][cam_idx],
                         'width': IMG_WIDTH
                     }
                 },

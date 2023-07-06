@@ -40,7 +40,7 @@ class Displayer:
 
         self.cfg = cfg
         self.result_cfg = cfg.save
-        self.middle_name = 'FSM_MR_6cams_DDAD'
+        self.ckpt_name = 'FSM_MR_6cams_DDAD'
         self.datasets, self.datasets_cfg = setup_datasets(cfg.datasets, verbose=True, stack=False)
         print('datasets_cfg:', self.datasets_cfg)
         self.dataloaders = {
@@ -63,7 +63,7 @@ class Displayer:
         self.result_depth_paths = []
         for c in self.datasets_cfg[self.mode][0].cameras[0]:
             prefix_name = self.prefixes[self.mode][0][:-1] + str(c)
-            self.result_depth_paths.append(os.path.join(self.result_cfg.folder, prefix_name, self.middle_name))
+            self.result_depth_paths.append(os.path.join(self.result_cfg.folder, prefix_name, self.ckpt_name))
         print('result_depth_paths:', self.result_depth_paths)
     
     
@@ -90,7 +90,7 @@ class Displayer:
         return {0: depth_tensor}
         
 
-    def test(self):
+    def show(self):
         mode = self.mode
         num_cams = self.num_cams
         
@@ -99,13 +99,13 @@ class Displayer:
                 enumerate(zip(self.datasets_cfg[mode], self.dataloaders[mode], self.prefixes[mode])):
             progress_bar = self.val_progress_bar(dataloader, prefix, ncols=120)
             
-            print('-----\n', dataset_cfg, '\n-----\n')
+            print('-----\n', dataset_cfg, '\n-----')
             wh = torch.Size(dataset_cfg.augmentation.resize[::-1])
             print('wh:', wh, type(wh))
 
             # 初始化该数据集的可视化窗口
             draw = Draw((wh[0] * 4, wh[1] * 3), width=3400)
-            draw.add2DimageGrid('cam', (0.0, 0.0, 0.5, 1.0), n=(3, 2), res=wh)
+            draw.add2DimageGrid('cam', (0.0, 0.0, 0.5, 1.0), n=(4, 2), res=wh)
             cam_pose = torch.tensor([[-9.9837e-01,  2.3715e-02,  5.1966e-02,  1.1167e+02],
                                      [-5.2108e-02, -5.4309e-03, -9.9863e-01, -2.2628e+03],
                                      [-2.3400e-02, -9.9970e-01,  6.6577e-03, -1.1144e+01],
@@ -125,6 +125,8 @@ class Displayer:
                         for k, v in batch[key].items():
                             batch[key][k] = v[0]
                     
+                print(batch)
+                
                 # 加载数据
                 rgb = batch['rgb']  
                 print("rgb:", rgb[0].shape)
@@ -222,13 +224,9 @@ class Displayer:
                             tex = 'cam%d' % i if cam_key == t else None
                             draw['wld'].object(cam_val, color=clr, tex=tex)
                         
-                    draw.update(30)
+                    draw.update(15)
                     if(self.auto_display):
                         break
-                
-                
-                #!----------------------------------------------------------
-
     
 
     def val_progress_bar(self, dataloader, prefix, ncols=None):

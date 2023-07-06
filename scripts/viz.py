@@ -17,10 +17,11 @@ def display(**kwargs):
 
     os.environ['DIST_MODE'] = 'gpu' if torch.cuda.is_available() else 'cpu'
 
-    cfg = 'configs/display/ddad_results.yaml'
+    cfg = 'configs/display/green_tractor_results.yaml'
+    # cfg = 'configs/display/ddad_results.yaml'
     cfg = read_config(cfg, **kwargs)
     displayer = Displayer(cfg)
-    displayer.test()
+    displayer.show()
 
 
 if __name__ == '__main__':
