@@ -2,10 +2,6 @@
 
 import os
 import sys
-sys.path.append('/workspace/vidar/display')
-sys.path.append('/workspace/vidar/')
-sys.path.append('/workspace/vidar')
-
 import fire
 import torch
 

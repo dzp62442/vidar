@@ -445,7 +445,6 @@ class Trainer:
             batch_results = []
             for batch_idx, batch in progress_bar:
                 # Send batch to GPU and take a validation step
-                print(batch_idx, batch.keys())
                 batch = sample_to_cuda(batch, self.proc_rank)
                 output, results = wrapper.validation_step(batch, epoch=self.current_epoch)
                 #! print("output: {}".format(output))
