@@ -27,6 +27,8 @@ CALIBRATION_PATH = os.path.join(ROOT_PATH, "Calibration", "calibration.json")  #
 CAM_NUMS = 8
 IMG_WIDTH = 1920
 IMG_HEIGHT = 1080
+USE_UNDISTORTION = True  # 是否使用去畸变后的图像
+STOP_NUM = 2000
 
 
 # 处理序列中缺失的图像文件
@@ -37,12 +39,13 @@ def process_missing_img(rgb_dir, cam_name, img_idx):
         pre_img = os.path.join(rgb_dir, cam_name, str(img_idx-1)+'.jpg')
         shutil.copy2(pre_img, current_img)  # 复制上一帧图像
 
+
 # 生成 scene_json 文件
-def make_scene_json(scene_json, calibration_json, rgb_dir):
+def make_scene_json(scene_json, calibration_result, sequence_dir):
     # 读取相机名称
-    with open(calibration_json, 'r') as f:
-        calibration_json_data = json.load(f)
-    cam_names = calibration_json_data['names']
+    cam_names = calibration_result['names']
+    rgb_dir = os.path.join(sequence_dir, 'rgb')
+    undistort_rgb_dir = os.path.join(sequence_dir, 'undistort_rgb')
     sequence_name = scene_json.split('/')[-2]  # 序列名称，例如 000000
     sequence_length = len(os.listdir(os.path.join(rgb_dir, cam_names[0])))  # 序列长度，即图像数目
 
@@ -64,16 +67,20 @@ def make_scene_json(scene_json, calibration_json, rgb_dir):
         # 添加 scene_json_data['data']
         for cam_idx, cam_name in enumerate(cam_names):
             process_missing_img(rgb_dir, cam_name, img_idx)
+            if USE_UNDISTORTION:  # 使用去畸变后的图像
+                filename = os.path.join('undistort_rgb', cam_name, str(img_idx)+'.jpg')
+            else:  # 使用原始图像
+                filename = os.path.join('rgb', cam_name, str(img_idx)+'.jpg')
             data = {
                 'datum': {
                     'image': {
                         'annotations': {},
                         'channels': 3,
-                        'filename': os.path.join('rgb', cam_name, str(img_idx)+'.jpg'),
+                        'filename': filename,
                         'height': IMG_HEIGHT,
                         'metadata': {},
-                        'pose': calibration_json_data['extrinsics'][cam_idx],
-                        'width': IMG_WIDTH
+                        'pose': calibration_result['extrinsics'][cam_idx],
+                        'width': IMG_HEIGHT
                     }
                 },
                 'id': {
@@ -138,8 +145,7 @@ def main():
         # 制作 scene_json
         scene_json = os.path.join(ROOT_PATH, split_name)
         print(scene_json)
-        rgb_dir = os.path.join(sequence_dir, 'rgb')  # 序列文件夹下的 rgb 文件夹
-        scene_json_data = make_scene_json(scene_json, calibration_json, rgb_dir)
+        scene_json_data = make_scene_json(scene_json, calibration_result, sequence_dir)
         with open(scene_json, 'w') as f:
             json.dump(scene_json_data, f, indent=4)
 
@@ -160,8 +166,7 @@ def main():
         # 制作 scene_json
         scene_json = os.path.join(ROOT_PATH, split_name)
         print(scene_json)
-        rgb_dir = os.path.join(sequence_dir, 'rgb')  # 序列文件夹下的 rgb 文件夹
-        scene_json_data = make_scene_json(scene_json, calibration_json, rgb_dir)
+        scene_json_data = make_scene_json(scene_json, calibration_result, sequence_dir)
         with open(scene_json, 'w') as f:
             json.dump(scene_json_data, f, indent=4)
 

@@ -56,8 +56,11 @@ class Displayer:
         self.tasks = ['rgb', 'depth', 'fwd_optical_flow', 'bwd_optical_flow','semantic']
         self.cam_colors = ['red', 'blu', 'gre', 'yel', 'mag', 'cya'] * 100
         self.delete_1d_list = ['rgb', 'intrinsics', 'depth', 'pose']  # 去除多余的第一个维度，与 display_sample.py 保持一致
-        self.num_cams = max(np.array(self.datasets_cfg[self.mode][0].cameras).shape)
-        self.auto_display = False
+        self.num_cams = max(np.array(self.datasets_cfg[self.mode][0].cameras).shape)  # 相机数目
+        self.auto_display = False  # 自动播放
+        self.start = cfg.display.start if cfg_has(cfg, 'display') else 0
+        self.stop = cfg.display.stop if cfg_has(cfg, 'display') else 1000000000
+        print(self.start, self.stop)
 
         # 生成深度图结果保存路径
         self.result_depth_paths = []
@@ -106,11 +109,11 @@ class Displayer:
             # 初始化该数据集的可视化窗口
             draw = Draw((wh[0] * 4, wh[1] * 3), width=3400)
             draw.add2DimageGrid('cam', (0.0, 0.0, 0.5, 1.0), n=(4, 2), res=wh)
-            cam_pose = torch.tensor([[-9.9837e-01,  2.3715e-02,  5.1966e-02,  1.1167e+02],
-                                     [-5.2108e-02, -5.4309e-03, -9.9863e-01, -2.2628e+03],
-                                     [-2.3400e-02, -9.9970e-01,  6.6577e-03, -1.1144e+01],
-                                     [ 0.0000e+00,  0.0000e+00,  0.0000e+00,  1.0000e+00]])
-            draw.add3Dworld('wld', (0.5, 0.0, 1.0, 1.0), pose=cam_pose)
+            view_pose = torch.tensor([[-0.9997,  0.0233, -0.0089, -0.0083],
+                                            [ 0.0088, -0.0069, -0.9999, -0.9769],
+                                            [-0.0234, -0.9997,  0.0067, -1.1443],
+                                            [ 0.0000,  0.0000,  0.0000,  1.0000]])
+            draw.add3Dworld('wld', (0.5, 0.0, 1.0, 1.0), pose=view_pose)  # 初始化 3D 窗口的虚拟观察相机的位姿
 
             draw.addTexture('cam', n=num_cams)
             draw.addBuffer3f('lidar', 1000000, n=num_cams)
@@ -118,37 +121,30 @@ class Displayer:
             
             # 遍历该数据集的所有帧
             for batch_idx, batch in progress_bar:
+                if batch_idx < self.start:
+                    continue
+                if batch_idx > self.stop:
+                    break
                 
                 # 去除多余的第一个维度，与 display_sample.py 保持一致
                 for key, val in batch.items():  
                     if key in self.delete_1d_list:
                         for k, v in batch[key].items():
                             batch[key][k] = v[0]
-                    
-                print(batch)
                 
                 # 加载数据
-                rgb = batch['rgb']  
-                print("rgb:", rgb[0].shape)
-                
+                rgb = batch['rgb']                  
                 intrinsics = batch['intrinsics']
-                print("intrinsics:", intrinsics[0].shape)
-                
                 depth = self.read_depth_results(batch_idx)
                 if (is_str(depth)):  # 读取深度结果失败
                     continue
                 batch['depth'] = depth
-                print("depth:", depth[0].shape)
-                # depth = batch['depth']
-                
                 pose = batch['pose']
-                print("pose:", pose[0].shape)
 
                 pose = Pose.from_dict(pose, to_global=True)
                 cam = Camera.from_dict(intrinsics, rgb, pose)
 
                 keys = [key for key in self.tasks if key in batch.keys()]
-                print("keys:", keys)
 
                 points = {}
                 for key, val in cam.items():
@@ -156,7 +152,7 @@ class Displayer:
                         depth[key], to_world=True).reshape(num_cams, 3, -1).permute(0, 2, 1)
                 
                 # 可视化
-                draw.add3Dworld('wld', (0.5, 0.0, 1.0, 1.0), pose=cam[0].Tcw.T[0])
+                # draw.add3Dworld('wld', (0.5, 0.0, 1.0, 1.0), pose=cam[0].Tcw.T[2])
 
                 camcv = []
                 for i in range(num_cams):
@@ -201,7 +197,7 @@ class Displayer:
                             t = self.change_key(batch[key], t, -1)
                     if change:
                         change = False
-                        print("key: {}, k: {}, t: {}".format(key, k, t))
+                        # print("key: {}, k: {}, t: {}".format(key, k, t))
                         for i in range(num_cams):
                             img = batch[key][t][i]
                             if key == 'depth':
@@ -224,7 +220,8 @@ class Displayer:
                             tex = 'cam%d' % i if cam_key == t else None
                             draw['wld'].object(cam_val, color=clr, tex=tex)
                         
-                    draw.update(15)
+                    # print(draw.screens['wld'].viewer.T)  # 3D 窗口的虚拟观察相机的位姿
+                    draw.update(5)
                     if(self.auto_display):
                         break
     

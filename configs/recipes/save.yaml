@@ -3,3 +3,13 @@ depth_splitname:
     naming: splitname
     rgb: [tgt]
     depth: [viz,npz]
+green_tractor_raw:
+    folder: /data/vidar/save/green_tractor_raw
+    naming: splitname
+    rgb: [tgt]
+    depth: [viz,npz]
+green_tractor_undist:
+    folder: /data/vidar/save/green_tractor_undist
+    naming: splitname
+    rgb: [tgt]
+    depth: [viz,npz]

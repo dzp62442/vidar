@@ -16,4 +16,4 @@ datasets:
     validation:
         recipe: datasets/green_tractor|validation_8cams
 save:
-    recipe: save|depth_splitname
+    recipe: save|green_tractor_undist

@@ -16,4 +16,7 @@ datasets:
     validation:
         recipe: datasets/green_tractor|display_results
 save:
-    recipe: save|depth_splitname
+    recipe: save|green_tractor_undist
+display:
+    start: 0
+    stop: 4000
